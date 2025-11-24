@@ -3,8 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Create Task</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Create New Task</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #333;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      font-size: 14px;
+      resize: vertical;
+    }
+
+    textarea {
+      min-height: 80px;
+    }
+
+    button, a.card {
+      display: inline-block;
+      text-decoration: none;
+      text-align: center;
+      padding: 10px 20px;
+      margin-top: 20px;
+      margin-right: 10px;
+      border-radius: 6px;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+      font-size: 14px;
+      transition: background 0.3s ease;
+    }
+
+    button:hover, a.card:hover {
+      opacity: 0.9;
+    }
+
+    .save-btn {
+      background: #008d3c;
+    }
+
+    .report-btn {
+      background: #0066cc;
+    }
+
+    .back-btn {
+      background: #555;
+    }
+
+  </style>
 </head>
 <body>
 <main class="container">
@@ -49,24 +128,58 @@
     <label>Remarks</label>
     <textarea id="remarks"></textarea>
 
-    <button type="button" class="card" id="openReport">Open Detailed Report</button>
-    <button type="submit" class="card" style="background:#008d3c;">Save Task</button>
-    <a href="index.html" class="card" style="background:#444;">Back</a>
+    <div>
+      <button type="button" class="report-btn" id="openReport">Create Detailed Report</button>
+      <button type="submit" class="save-btn">Save Task</button>
+      <a href="index.html" class="card back-btn">Back</a>
+    </div>
 
   </form>
 </main>
 
-<script>
-/* Generate Task ID (MT + YY + 001) */
-function generateTaskId() {
-  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+<script type="module">
+
+/* ------------------------------
+   Firebase Setup
+--------------------------------*/
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+/* 🔥 REPLACE THIS WITH YOUR OWN FIREBASE CONFIG */
+const firebaseConfig = {
+  apiKey: "AIzaSyA5d1rWrn9C9x5slkvkLQXW29JiMXoMSeg",
+  authDomain: "tasktracker-e2329.firebaseapp.com",
+  projectId: "tasktracker-e2329",
+  storageBucket: "tasktracker-e2329.firebasestorage.app",
+  messagingSenderId: "1044567656792",
+  appId: "1:1044567656792:web:58a8e5f942f1ac66213d2d",
+  measurementId: "G-VNRBNZ4R28"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* ------------------------------
+   Generate Task ID (MT + YY + ###)
+--------------------------------*/
+async function generateTaskId() {
   const year = new Date().getFullYear().toString().slice(-2);
-  const filtered = tasks.filter(t => t.id.startsWith("MT" + year));
-  const nextNumber = String(filtered.length + 1).padStart(3, "0");
+  const snapshot = await getDocs(collection(db, "tasks"));
+
+  let count = 0;
+  snapshot.forEach(doc => {
+    if (doc.data().id.startsWith("MT" + year)) count++;
+  });
+
+  const nextNumber = String(count + 1).padStart(3, "0");
   return "MT" + year + nextNumber;
 }
 
-/* Format date dd:mm:yyyy */
+/* ------------------------------
+   Format date dd:mm:yyyy
+--------------------------------*/
 function formatDate(date = new Date()) {
   const dd = String(date.getDate()).padStart(2, "0");
   const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -74,22 +187,29 @@ function formatDate(date = new Date()) {
   return `${dd}:${mm}:${yyyy}`;
 }
 
-/* Load when page opens */
-document.addEventListener("DOMContentLoaded", () => {
-  document.getElementById("taskId").value = generateTaskId();
-  document.getElementById("startDate").value = formatDate();
+/* ------------------------------
+   Load on page
+--------------------------------*/
+document.addEventListener("DOMContentLoaded", async () => {
+
+  const taskIdField = document.getElementById("taskId");
+  const newTaskId = await generateTaskId();
+  taskIdField.value = newTaskId;
+
+  const startDateField = document.getElementById("startDate");
+  startDateField.value = formatDate();
 
   document.getElementById("openReport").addEventListener("click", () => {
-    const id = document.getElementById("taskId").value;
-    window.location.href = `report.html?id=${id}`;
+    window.location.href = `report.html?id=${newTaskId}`;
   });
+
 });
 
-/* Save task */
-document.getElementById("taskForm").addEventListener("submit", (e) => {
+/* ------------------------------
+   Save task to Firestore
+--------------------------------*/
+document.getElementById("taskForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-
-  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
 
   const newTask = {
     id: document.getElementById("taskId").value,
@@ -104,13 +224,12 @@ document.getElementById("taskForm").addEventListener("submit", (e) => {
     createdAt: new Date().toISOString()
   };
 
-  tasks.push(newTask);
-  localStorage.setItem("tasks", JSON.stringify(tasks));
+  await addDoc(collection(db, "tasks"), newTask);
 
-  alert("Task created!");
+  alert("Task created successfully!");
   window.location.href = "index.html";
 });
-</script>
 
+</script>
 </body>
 </html>
