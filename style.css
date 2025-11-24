@@ -1,1 +1,63 @@
-body{font-family:sans-serif;}
+:root{
+  --bg:#f7fbff;
+  --card:#2d6cdf;
+  --card-hover:#244fb2;
+  --text:#0b2540;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.container{
+  width:980px;
+  max-width:95%;
+  padding:28px;
+  background:white;
+  border-radius:12px;
+  box-shadow:0 8px 30px rgba(3,18,45,0.08);
+  text-align:center;
+}
+
+h1{
+  margin:0 0 8px;
+  font-size:28px;
+}
+
+.subtitle{
+  color:#365777;
+  margin:0 0 18px;
+}
+
+.cards{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:14px;
+  margin:20px 0;
+}
+
+.card{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px 12px;
+  background:var(--card);
+  color:white;
+  text-decoration:none;
+  border-radius:10px;
+  font-weight:600;
+  transition:transform .14s ease, background .14s ease;
+  user-select:none;
+}
+
+.card:hover{ transform:translateY(-4px); background:var(--card-hover) }
+
+footer{ margin-top:18px; color:#6b849f; font-size:13px }
