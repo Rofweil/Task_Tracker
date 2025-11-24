@@ -1,10 +1,116 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>Create Task</title>
-<link rel="stylesheet" href="style.css"></head>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Task</title>
+  <link rel="stylesheet" href="style.css">
+</head>
 <body>
-  <main class="container">
-    <h1>Create New Form</h1>
-    <p>This page is a placeholder. Next step we will add the form here.</p>
-    <p><a class="card" href="index.html" style="display:inline-block; background:#444; margin-top:12px;">Back to Home</a></p>
-  </main>
-</body></html>
+<main class="container">
+  <h1>Create New Task</h1>
+
+  <form id="taskForm">
+
+    <label>Task ID</label>
+    <input type="text" id="taskId" readonly>
+
+    <label>Task Description</label>
+    <textarea id="description" required></textarea>
+
+    <label>Category</label>
+    <select id="category">
+      <option>In Progress</option>
+      <option>Completed</option>
+      <option>Under Monitoring</option>
+      <option>Not Started</option>
+      <option>Canceled</option>
+    </select>
+
+    <label>Assigned To</label>
+    <select id="assigned">
+      <option>Adly</option>
+      <option>Eizzat</option>
+    </select>
+
+    <label>Start Date (dd:mm:yyyy)</label>
+    <input type="text" id="startDate">
+
+    <label>Due Date (dd:mm:yyyy)</label>
+    <input type="text" id="dueDate">
+
+    <label>Priority</label>
+    <select id="priority">
+      <option>Low</option>
+      <option>Medium</option>
+      <option>High</option>
+    </select>
+
+    <label>Remarks</label>
+    <textarea id="remarks"></textarea>
+
+    <button type="button" class="card" id="openReport">Open Detailed Report</button>
+    <button type="submit" class="card" style="background:#008d3c;">Save Task</button>
+    <a href="index.html" class="card" style="background:#444;">Back</a>
+
+  </form>
+</main>
+
+<script>
+/* Generate Task ID (MT + YY + 001) */
+function generateTaskId() {
+  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+  const year = new Date().getFullYear().toString().slice(-2);
+  const filtered = tasks.filter(t => t.id.startsWith("MT" + year));
+  const nextNumber = String(filtered.length + 1).padStart(3, "0");
+  return "MT" + year + nextNumber;
+}
+
+/* Format date dd:mm:yyyy */
+function formatDate(date = new Date()) {
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = date.getFullYear();
+  return `${dd}:${mm}:${yyyy}`;
+}
+
+/* Load when page opens */
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("taskId").value = generateTaskId();
+  document.getElementById("startDate").value = formatDate();
+
+  document.getElementById("openReport").addEventListener("click", () => {
+    const id = document.getElementById("taskId").value;
+    window.location.href = `report.html?id=${id}`;
+  });
+});
+
+/* Save task */
+document.getElementById("taskForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+
+  const newTask = {
+    id: document.getElementById("taskId").value,
+    description: document.getElementById("description").value,
+    category: document.getElementById("category").value,
+    assigned: document.getElementById("assigned").value,
+    startDate: document.getElementById("startDate").value,
+    dueDate: document.getElementById("dueDate").value,
+    priority: document.getElementById("priority").value,
+    remarks: document.getElementById("remarks").value,
+    detailedReport: "",
+    createdAt: new Date().toISOString()
+  };
+
+  tasks.push(newTask);
+  localStorage.setItem("tasks", JSON.stringify(tasks));
+
+  alert("Task created!");
+  window.location.href = "index.html";
+});
+</script>
+
+</body>
+</html>
