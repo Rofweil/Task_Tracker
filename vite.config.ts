@@ -4,7 +4,7 @@
   import path from 'path';
 
   export default defineConfig({
-    base: '/BackendStaff/',
+    base: '/Task_Tracker/',
     plugins: [react()],
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
