@@ -55,7 +55,16 @@
             "vite": "6.3.5"
       },
       "scripts": {
+<<<<<<< HEAD
             "dev": "vite",
             "build": "vite build"
       }
 }
+=======
+          "dev": "vite",
+          "build": "vite build",
+          "preview": "vite preview",
+          "deploy": "gh-pages -d dist"
+      }
+  }
+>>>>>>> 727ea98333370f3ef8846cee65563de9e1c6a8d9
