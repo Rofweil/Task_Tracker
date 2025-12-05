@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { X, Trash2, Search, User, Mail, AlertTriangle, Calendar, Building } from 'lucide-react';
+import { X, Trash2, Search, User, Mail, Shield, AlertTriangle, Calendar } from 'lucide-react';
 import { ref, remove } from 'firebase/database';
 import { database } from '../lib/firebase';
 
@@ -12,39 +12,36 @@ interface UserManagementProps {
 
 export function UserManagement({ users, currentUser, onClose, onUpdate }: UserManagementProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
+  const [roleFilter, setRoleFilter] = useState('all');
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
 
-  // Extract department list
-  const departmentOptions = useMemo(() => {
-    const departments = new Set<string>();
-    users.forEach(u => {
-      if (u.department) departments.add(u.department);
-    });
-    return Array.from(departments);
-  }, [users]);
+  // Normalize users (Default missing role → "user")
+  const normalizedUsers = users.map((u) => ({
+    ...u,
+    role: u.role || "user",     // ensure normal users show up
+    department: u.department || "Unknown"
+  }));
 
-  // Filter users
+  // Filtered user list
   const filteredUsers = useMemo(() => {
-    let filtered = users;
+    let filtered = normalizedUsers;
 
-    // Search
+    // Search filter
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      filtered = filtered.filter(user =>
-        (user.name?.toLowerCase().includes(q) ||
-        user.displayName?.toLowerCase().includes(q) ||
-        user.email?.toLowerCase().includes(q))
+      filtered = filtered.filter((user) =>
+        (user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
 
-    // Department filter
-    if (departmentFilter !== 'all') {
-      filtered = filtered.filter(u => u.department === departmentFilter);
+    // Role filter
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter((user) => user.role === roleFilter);
     }
 
     return filtered;
-  }, [users, searchQuery, departmentFilter]);
+  }, [normalizedUsers, searchQuery, roleFilter]);
 
   const handleDeleteUser = async (userId: string, userEmail: string, userName: string) => {
     if (userId === currentUser.uid) {
@@ -53,21 +50,34 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
     }
 
     const confirmed = confirm(
-      `Delete user "${userName}" (${userEmail})?\n\nThis cannot be undone.\nUser will still exist in Firebase Auth.`
+      `Delete user "${userName}" (${userEmail})?\n\n` +
+        "This will remove them from the database.\n\n" +
+        "⚠ They can still sign in using Firebase Auth.\n" +
+        "To fully remove login access, delete them in Firebase Console."
     );
 
     if (!confirmed) return;
 
     setDeletingUserId(userId);
+
     try {
       await remove(ref(database, `users/${userId}`));
-      alert(`User "${userName}" removed successfully.`);
+
+      alert(`User "${userName}" has been deleted.`);
       onUpdate();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to delete user.');
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      alert('Delete failed, please try again.');
+    } finally {
+      setDeletingUserId(null);
     }
-    setDeletingUserId(null);
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    if (role === 'IT Staff') {
+      return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+    }
+    return 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
   return (
@@ -78,12 +88,11 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-indigo-600 to-purple-600">
           <div>
             <h2 className="text-white flex items-center gap-2">
-              <Building size={24} />
+              <Shield size={24} />
               User Management
             </h2>
-            <p className="text-indigo-100 mt-1">Manage user departments and data</p>
+            <p className="text-indigo-100 mt-1">Manage all system users</p>
           </div>
-
           <button onClick={onClose} className="text-white hover:text-indigo-200">
             <X size={24} />
           </button>
@@ -92,8 +101,6 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
         {/* Filters */}
         <div className="p-6 border-b border-gray-200 bg-gray-50">
           <div className="flex flex-col md:flex-row gap-4">
-
-            {/* Search */}
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
@@ -101,30 +108,28 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name or email..."
+                  placeholder="Search users..."
                   className="w-full pl-11 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                 />
               </div>
             </div>
 
-            {/* Department Filter */}
             <div>
               <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="all">All Departments</option>
-                {departmentOptions.map(( dept ) => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
+                <option value="all">All Users</option>
+                <option value="user">Normal Users</option>
+                <option value="IT Staff">IT Staff</option>
               </select>
             </div>
           </div>
 
           <div className="mt-3 flex items-center gap-2 text-gray-600">
             <User size={16} />
-            <span>Showing {filteredUsers.length} of {users.length} users</span>
+            <span>Showing {filteredUsers.length} of {normalizedUsers.length} users</span>
           </div>
         </div>
 
@@ -138,12 +143,11 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
           ) : (
             <div className="grid gap-4">
               {filteredUsers.map((user) => (
-                <div key={user.uid} className="bg-white border rounded-lg p-4 hover:shadow-md">
+                <div key={user.uid} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md">
 
+                  {/* User Card */}
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-
-                      {/* User Name */}
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
                           <User className="text-indigo-600" size={20} />
@@ -155,9 +159,8 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
                               {user.name || user.displayName || 'Unnamed User'}
                             </h3>
 
-                            {/* Department Badge */}
-                            <span className="px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full text-xs">
-                              {user.department || 'No Dept'}
+                            <span className={`px-2 py-1 rounded-full text-xs border ${getRoleBadgeColor(user.role)}`}>
+                              {user.role}
                             </span>
 
                             {user.uid === currentUser.uid && (
@@ -167,7 +170,6 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
                             )}
                           </div>
 
-                          {/* Email + Department */}
                           <div className="flex items-center gap-4 mt-1 text-gray-600">
                             <div className="flex items-center gap-1">
                               <Mail size={14} />
@@ -175,14 +177,10 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
                             </div>
 
                             {user.department && (
-                              <div className="flex items-center gap-1">
-                                <Building size={14} />
-                                <span>{user.department}</span>
-                              </div>
+                              <span className="text-gray-500">Dept: {user.department}</span>
                             )}
                           </div>
 
-                          {/* Joined Date */}
                           {user.createdAt && (
                             <div className="flex items-center gap-1 mt-1 text-gray-500">
                               <Calendar size={14} />
@@ -209,7 +207,6 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
                         </button>
                       )}
                     </div>
-
                   </div>
                 </div>
               ))}
@@ -217,17 +214,17 @@ export function UserManagement({ users, currentUser, onClose, onUpdate }: UserMa
           )}
         </div>
 
-        {/* Warning Footer */}
+        {/* Footer Warning */}
         <div className="p-4 bg-yellow-50 border-t border-yellow-200">
           <div className="flex items-start gap-3">
-            <AlertTriangle className="text-yellow-600" size={20} />
+            <AlertTriangle className="text-yellow-600 mt-0.5" size={20} />
             <div className="text-yellow-800">
-              <p className="font-medium">Important Notes:</p>
+              <p className="font-medium">Important:</p>
               <ul className="mt-1 text-sm space-y-1 list-disc list-inside">
-                <li>Deleting a user removes them from the Realtime Database.</li>
-                <li>They will still be able to sign in unless removed in Firebase Authentication.</li>
-                <li>You cannot delete your own account.</li>
-                <li>This action cannot be undone.</li>
+                <li>Deleting a user removes them from Database only</li>
+                <li>Users can still sign in unless deleted in Firebase Authentication</li>
+                <li>IT Staff should not be deleted unless intentional</li>
+                <li>You cannot delete your own account</li>
               </ul>
             </div>
           </div>
