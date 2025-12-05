@@ -6,6 +6,29 @@ import { ClaimTicketModal } from './claim-ticket-modal';
 import { TicketDetailModal } from './ticket-detail-modal';
 import { TicketReport } from './ticket-report';
 import { UserManagement } from './user-management';
+import { onValue, ref } from "firebase/database";
+import { database } from "../lib/firebase";
+
+const [users, setUsers] = useState([]);
+
+useEffect(() => {
+  const usersRef = ref(database, "users");
+  const unsubscribe = onValue(usersRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const list = Object.entries(data).map(([uid, user]: any) => ({
+        uid,
+        ...user,
+      }));
+      setUsers(list);
+    } else {
+      setUsers([]);
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
+
 import { 
   LogOut, 
   Ticket, 
