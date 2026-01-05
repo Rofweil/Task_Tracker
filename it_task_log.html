@@ -9,23 +9,18 @@
 :root{
     --primary:#2563eb;
     --primary-dark:#1e40af;
-    --bg:#f1f5f9;
     --card:#ffffff;
     --text:#1f2937;
     --muted:#64748b;
     --border:#e5e7eb;
-    --success:#16a34a;
-    --warning:#f59e0b;
     --danger:#dc2626;
 }
 
-*{
-    box-sizing:border-box;
-}
+*{ box-sizing:border-box; }
 
 body{
-    font-family: "Inter", "Segoe UI", sans-serif;
-    background: linear-gradient(135deg,#e0e7ff,#f8fafc);
+    font-family:"Inter","Segoe UI",sans-serif;
+    background:linear-gradient(135deg,#e0e7ff,#f8fafc);
     margin:0;
     padding:24px;
     color:var(--text);
@@ -35,7 +30,6 @@ h1{
     text-align:center;
     margin-bottom:24px;
     color:var(--primary-dark);
-    letter-spacing:0.5px;
 }
 
 .container{
@@ -47,7 +41,7 @@ h1{
     box-shadow:0 20px 40px rgba(0,0,0,.08);
 }
 
-/* ---------- FORM ---------- */
+/* FORM */
 form{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
@@ -60,37 +54,29 @@ form div{
     flex-direction:column;
 }
 
-form label{
+label{
     font-size:13px;
     font-weight:600;
     margin-bottom:6px;
     color:var(--muted);
 }
 
-form input,
-form select,
-form textarea{
+input,select,textarea{
     padding:11px 12px;
     border-radius:10px;
     border:1px solid var(--border);
     font-size:14px;
-    transition:.2s;
 }
 
-form input:focus,
-form select:focus,
-form textarea:focus{
+input:focus,select:focus,textarea:focus{
     border-color:var(--primary);
     outline:none;
     box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
-form textarea{
-    resize:vertical;
-    min-height:80px;
-}
+textarea{ min-height:80px; resize:vertical; }
 
-form button{
+button{
     grid-column:span 3;
     padding:14px;
     border:none;
@@ -100,18 +86,14 @@ form button{
     font-size:15px;
     font-weight:700;
     cursor:pointer;
-    transition:.2s;
 }
 
-form button:hover{
-    transform:translateY(-1px);
+button:hover{
     box-shadow:0 10px 20px rgba(37,99,235,.35);
 }
 
-/* ---------- TABLE ---------- */
-.table-wrapper{
-    overflow-x:auto;
-}
+/* TABLE */
+.table-wrapper{ overflow-x:auto; }
 
 table{
     width:100%;
@@ -124,37 +106,23 @@ thead th{
     background:var(--primary);
     color:white;
     padding:12px;
-    text-align:left;
     position:sticky;
     top:0;
-    z-index:1;
-}
-
-thead th:first-child{
-    border-top-left-radius:12px;
-}
-
-thead th:last-child{
-    border-top-right-radius:12px;
 }
 
 tbody td{
     padding:10px 12px;
     border-bottom:1px solid var(--border);
-    vertical-align:top;
 }
 
-tbody tr:hover{
-    background:#f8fafc;
-}
+tbody tr:hover{ background:#f8fafc; }
 
-/* ---------- BADGES ---------- */
+/* BADGES */
 .badge{
     padding:4px 10px;
     border-radius:999px;
     font-size:12px;
     font-weight:600;
-    display:inline-block;
 }
 
 .priority-Low{background:#e0f2fe;color:#0369a1;}
@@ -166,37 +134,20 @@ tbody tr:hover{
 .status-Monitoring{background:#bae6fd;color:#075985;}
 .status-Completed{background:#bbf7d0;color:#166534;}
 
-/* ---------- BUTTONS ---------- */
-.btn{
-    border:none;
-    border-radius:8px;
-    padding:6px 10px;
-    font-size:13px;
-    cursor:pointer;
-    font-weight:600;
-}
-
 .btn-view{
     background:var(--primary);
     color:white;
-}
-
-.btn-view:hover{
-    background:var(--primary-dark);
+    border:none;
+    border-radius:8px;
+    padding:6px 10px;
+    cursor:pointer;
 }
 
 .delete-btn{
     color:var(--danger);
-    font-weight:700;
     cursor:pointer;
+    font-weight:700;
     margin-left:8px;
-}
-
-/* ---------- RESPONSIVE ---------- */
-@media(max-width:900px){
-    form button{
-        grid-column:span 1;
-    }
 }
 </style>
 </head>
@@ -215,7 +166,7 @@ tbody tr:hover{
 
     <div>
         <label>Task Title</label>
-        <input type="text" id="taskTitle" placeholder="e.g. Fix network outage" required>
+        <input type="text" id="taskTitle" required>
     </div>
 
     <div>
@@ -253,12 +204,12 @@ tbody tr:hover{
 
     <div style="grid-column:span 3;">
         <label>Description</label>
-        <textarea id="description" placeholder="Detailed task explanation..." required></textarea>
+        <textarea id="description" required></textarea>
     </div>
 
     <div style="grid-column:span 3;">
-        <label>Share URL of Detailed Report</label>
-        <input type="url" id="reportUrl" placeholder="https://drive.google.com/...">
+        <label>Report URL</label>
+        <input type="url" id="reportUrl">
     </div>
 
     <button type="submit">➕ Add Task</button>
@@ -292,17 +243,13 @@ tbody tr:hover{
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyA5d1rWrn9C9x5slkvkLQXW29JiMXoMSeg",
   authDomain: "tasktracker-e2329.firebaseapp.com",
   databaseURL: "https://tasktracker-e2329-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "tasktracker-e2329",
-  storageBucket: "tasktracker-e2329.appspot.com",
-  messagingSenderId: "1044567656792",
-  appId: "1:1044567656792:web:58a8e5f942f1ac66213d2d"
-};
+  projectId: "tasktracker-e2329"
+});
 
-firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const tasksRef = db.ref("tasks");
 
@@ -314,7 +261,6 @@ function generateTaskID(count){
 function renderTasks(data){
     const table = document.getElementById("taskTable");
     table.innerHTML = "";
-
     Object.keys(data).forEach(key=>{
         const t = data[key];
         table.innerHTML += `
@@ -327,7 +273,7 @@ function renderTasks(data){
             <td>${t.dueDate}</td>
             <td><span class="badge priority-${t.priority}">${t.priority}</span></td>
             <td><span class="badge status-${t.status}">${t.status}</span></td>
-            <td>${t.reportUrl ? `<button class="btn btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
+            <td>${t.reportUrl ? `<button class="btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
             <td>${t.updated}</td>
             <td><span class="delete-btn" onclick="deleteTask('${key}')">Delete</span></td>
         </tr>`;
@@ -340,26 +286,31 @@ function deleteTask(key){
     }
 }
 
-document.getElementById("taskForm").addEventListener("submit",e=>{
+document.getElementById("taskForm").addEventListener("submit", e=>{
     e.preventDefault();
-    tasksRef.once("value").then(s=>{
-        tasksRef.push({
-            id: generateTaskID(s.numChildren()),
-            date: taskDate.value,
-            title: taskTitle.value,
-            description: description.value,
-            assignTo: assignTo.value,
-            dueDate: dueDate.value,
-            priority: priority.value,
-            status: status.value,
-            reportUrl: reportUrl.value,
-            updated: new Date().toLocaleString()
-        });
+
+    const task = {
+        date: document.getElementById("taskDate").value,
+        title: document.getElementById("taskTitle").value,
+        description: document.getElementById("description").value,
+        assignTo: document.getElementById("assignTo").value,
+        dueDate: document.getElementById("dueDate").value,
+        priority: document.getElementById("priority").value,
+        status: document.getElementById("status").value,
+        reportUrl: document.getElementById("reportUrl").value,
+        updated: new Date().toLocaleString()
+    };
+
+    tasksRef.once("value").then(snap=>{
+        task.id = generateTaskID(snap.numChildren());
+        tasksRef.push(task);
         e.target.reset();
     });
 });
 
-tasksRef.on("value",s=>renderTasks(s.val()||{}));
+tasksRef.on("value", snap=>{
+    renderTasks(snap.val() || {});
+});
 </script>
 
 </body>
