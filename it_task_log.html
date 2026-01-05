@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MT IT Task Log</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+:root{
+    --primary:#2563eb;
+    --primary-dark:#1e40af;
+    --bg:#f1f5f9;
+    --card:#ffffff;
+    --text:#1f2937;
+    --muted:#64748b;
+    --border:#e5e7eb;
+    --success:#16a34a;
+    --warning:#f59e0b;
+    --danger:#dc2626;
+}
+
+*{
+    box-sizing:border-box;
+}
+
+body{
+    font-family: "Inter", "Segoe UI", sans-serif;
+    background: linear-gradient(135deg,#e0e7ff,#f8fafc);
+    margin:0;
+    padding:24px;
+    color:var(--text);
+}
+
+h1{
+    text-align:center;
+    margin-bottom:24px;
+    color:var(--primary-dark);
+    letter-spacing:0.5px;
+}
+
+.container{
+    max-width:1300px;
+    margin:auto;
+    background:var(--card);
+    padding:28px;
+    border-radius:16px;
+    box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+
+/* ---------- FORM ---------- */
+form{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:18px 22px;
+    margin-bottom:32px;
+}
+
+form div{
+    display:flex;
+    flex-direction:column;
+}
+
+form label{
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--muted);
+}
+
+form input,
+form select,
+form textarea{
+    padding:11px 12px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    font-size:14px;
+    transition:.2s;
+}
+
+form input:focus,
+form select:focus,
+form textarea:focus{
+    border-color:var(--primary);
+    outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+form textarea{
+    resize:vertical;
+    min-height:80px;
+}
+
+form button{
+    grid-column:span 3;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    color:white;
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    transition:.2s;
+}
+
+form button:hover{
+    transform:translateY(-1px);
+    box-shadow:0 10px 20px rgba(37,99,235,.35);
+}
+
+/* ---------- TABLE ---------- */
+.table-wrapper{
+    overflow-x:auto;
+}
+
+table{
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:14px;
+}
+
+thead th{
+    background:var(--primary);
+    color:white;
+    padding:12px;
+    text-align:left;
+    position:sticky;
+    top:0;
+    z-index:1;
+}
+
+thead th:first-child{
+    border-top-left-radius:12px;
+}
+
+thead th:last-child{
+    border-top-right-radius:12px;
+}
+
+tbody td{
+    padding:10px 12px;
+    border-bottom:1px solid var(--border);
+    vertical-align:top;
+}
+
+tbody tr:hover{
+    background:#f8fafc;
+}
+
+/* ---------- BADGES ---------- */
+.badge{
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+}
+
+.priority-Low{background:#e0f2fe;color:#0369a1;}
+.priority-Medium{background:#fef3c7;color:#92400e;}
+.priority-High{background:#fee2e2;color:#991b1b;}
+.priority-Critical{background:#dc2626;color:white;}
+
+.status-Pending{background:#fde68a;color:#92400e;}
+.status-Monitoring{background:#bae6fd;color:#075985;}
+.status-Completed{background:#bbf7d0;color:#166534;}
+
+/* ---------- BUTTONS ---------- */
+.btn{
+    border:none;
+    border-radius:8px;
+    padding:6px 10px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn-view{
+    background:var(--primary);
+    color:white;
+}
+
+.btn-view:hover{
+    background:var(--primary-dark);
+}
+
+.delete-btn{
+    color:var(--danger);
+    font-weight:700;
+    cursor:pointer;
+    margin-left:8px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+@media(max-width:900px){
+    form button{
+        grid-column:span 1;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Mountain Torq – IT Task Log</h1>
+
+<div class="container">
+
+<form id="taskForm">
+    <div>
+        <label>Task Date</label>
+        <input type="date" id="taskDate" required>
+    </div>
+
+    <div>
+        <label>Task Title</label>
+        <input type="text" id="taskTitle" placeholder="e.g. Fix network outage" required>
+    </div>
+
+    <div>
+        <label>Assign To</label>
+        <select id="assignTo" required>
+            <option value="">Select</option>
+            <option>Adly</option>
+            <option>Eizzat</option>
+        </select>
+    </div>
+
+    <div>
+        <label>Due Date</label>
+        <input type="date" id="dueDate" required>
+    </div>
+
+    <div>
+        <label>Priority</label>
+        <select id="priority" required>
+            <option>Low</option>
+            <option>Medium</option>
+            <option>High</option>
+            <option>Critical</option>
+        </select>
+    </div>
+
+    <div>
+        <label>Status</label>
+        <select id="status" required>
+            <option>Pending</option>
+            <option>Monitoring</option>
+            <option>Completed</option>
+        </select>
+    </div>
+
+    <div style="grid-column:span 3;">
+        <label>Description</label>
+        <textarea id="description" placeholder="Detailed task explanation..." required></textarea>
+    </div>
+
+    <div style="grid-column:span 3;">
+        <label>Share URL of Detailed Report</label>
+        <input type="url" id="reportUrl" placeholder="https://drive.google.com/...">
+    </div>
+
+    <button type="submit">➕ Add Task</button>
+</form>
+
+<div class="table-wrapper">
+<table>
+<thead>
+<tr>
+    <th>ID</th>
+    <th>Date</th>
+    <th>Title</th>
+    <th>Description</th>
+    <th>Assign</th>
+    <th>Due</th>
+    <th>Priority</th>
+    <th>Status</th>
+    <th>Report</th>
+    <th>Updated</th>
+    <th>Action</th>
+</tr>
+</thead>
+<tbody id="taskTable"></tbody>
+</table>
+</div>
+
+</div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyA5d1rWrn9C9x5slkvkLQXW29JiMXoMSeg",
+  authDomain: "tasktracker-e2329.firebaseapp.com",
+  databaseURL: "https://tasktracker-e2329-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tasktracker-e2329",
+  storageBucket: "tasktracker-e2329.appspot.com",
+  messagingSenderId: "1044567656792",
+  appId: "1:1044567656792:web:58a8e5f942f1ac66213d2d"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const tasksRef = db.ref("tasks");
+
+function generateTaskID(count){
+    const year = new Date().getFullYear().toString().slice(-2);
+    return `MT${year}${String(count+1).padStart(3,"0")}`;
+}
+
+function renderTasks(data){
+    const table = document.getElementById("taskTable");
+    table.innerHTML = "";
+
+    Object.keys(data).forEach(key=>{
+        const t = data[key];
+        table.innerHTML += `
+        <tr>
+            <td>${t.id}</td>
+            <td>${t.date}</td>
+            <td>${t.title}</td>
+            <td>${t.description}</td>
+            <td>${t.assignTo}</td>
+            <td>${t.dueDate}</td>
+            <td><span class="badge priority-${t.priority}">${t.priority}</span></td>
+            <td><span class="badge status-${t.status}">${t.status}</span></td>
+            <td>${t.reportUrl ? `<button class="btn btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
+            <td>${t.updated}</td>
+            <td><span class="delete-btn" onclick="deleteTask('${key}')">Delete</span></td>
+        </tr>`;
+    });
+}
+
+function deleteTask(key){
+    if(confirm("Delete this task?")){
+        tasksRef.child(key).remove();
+    }
+}
+
+document.getElementById("taskForm").addEventListener("submit",e=>{
+    e.preventDefault();
+    tasksRef.once("value").then(s=>{
+        tasksRef.push({
+            id: generateTaskID(s.numChildren()),
+            date: taskDate.value,
+            title: taskTitle.value,
+            description: description.value,
+            assignTo: assignTo.value,
+            dueDate: dueDate.value,
+            priority: priority.value,
+            status: status.value,
+            reportUrl: reportUrl.value,
+            updated: new Date().toLocaleString()
+        });
+        e.target.reset();
+    });
+});
+
+tasksRef.on("value",s=>renderTasks(s.val()||{}));
+</script>
+
+</body>
+</html>
