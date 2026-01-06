@@ -386,26 +386,55 @@ document.getElementById("exportExcel").addEventListener("click", () => {
             return;
         }
 
-        const rows = [];
+        // Match table column order exactly
+        const rows = [
+            [
+                "ID",
+                "Date",
+                "Title",
+                "Description",
+                "Assign",
+                "Due",
+                "Priority",
+                "Status",
+                "Report URL",
+                "Updated"
+            ]
+        ];
 
         Object.values(data).forEach(t => {
-            rows.push({
-                ID: t.id,
-                Date: t.date,
-                Title: t.title,
-                Description: t.description,
-                Assign_To: t.assignTo,
-                Due_Date: t.dueDate,
-                Priority: t.priority,
-                Status: t.status,
-                Report_URL: t.reportUrl || "",
-                Last_Updated: t.updated
-            });
+            rows.push([
+                t.id,
+                t.date,
+                t.title,
+                t.description,
+                t.assignTo,
+                t.dueDate,
+                t.priority,
+                t.status,
+                t.reportUrl || "",
+                t.updated
+            ]);
         });
 
-        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const worksheet = XLSX.utils.aoa_to_sheet(rows);
+
+        // Column widths (readable like table)
+        worksheet["!cols"] = [
+            { wch: 10 }, // ID
+            { wch: 12 }, // Date
+            { wch: 25 }, // Title
+            { wch: 40 }, // Description
+            { wch: 12 }, // Assign
+            { wch: 12 }, // Due
+            { wch: 12 }, // Priority
+            { wch: 14 }, // Status
+            { wch: 30 }, // Report URL
+            { wch: 20 }  // Updated
+        ];
+
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "IT Tasks");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "IT Task Log");
 
         const fileName = `MT_IT_Task_Log_${new Date().toISOString().slice(0,10)}.xlsx`;
         XLSX.writeFile(workbook, fileName);
@@ -417,6 +446,7 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 
 </body>
 </html>
+
 
 
 
