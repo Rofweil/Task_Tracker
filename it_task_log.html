@@ -49,6 +49,11 @@ form{
     margin-bottom:32px;
 }
 
+form div{
+    display:flex;
+    flex-direction:column;
+}
+
 label{
     font-size:13px;
     font-weight:600;
@@ -61,6 +66,12 @@ input,select,textarea{
     border-radius:10px;
     border:1px solid var(--border);
     font-size:14px;
+}
+
+input:focus,select:focus,textarea:focus{
+    border-color:var(--primary);
+    outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
 textarea{ min-height:80px; resize:vertical; }
@@ -77,6 +88,11 @@ button{
     cursor:pointer;
 }
 
+button:hover{
+    box-shadow:0 10px 20px rgba(37,99,235,.35);
+}
+
+/* TABLE */
 .table-wrapper{ overflow-x:auto; }
 
 table{
@@ -90,6 +106,8 @@ thead th{
     background:var(--primary);
     color:white;
     padding:12px;
+    position:sticky;
+    top:0;
 }
 
 tbody td{
@@ -97,6 +115,9 @@ tbody td{
     border-bottom:1px solid var(--border);
 }
 
+tbody tr:hover{ background:#f8fafc; }
+
+/* BADGES */
 .badge{
     padding:4px 10px;
     border-radius:999px;
@@ -120,16 +141,6 @@ tbody td{
     border-radius:8px;
     padding:6px 10px;
     cursor:pointer;
-    margin-right:6px;
-}
-
-.edit-btn{
-    background:#16a34a;
-    color:white;
-    border:none;
-    border-radius:8px;
-    padding:6px 10px;
-    cursor:pointer;
 }
 
 .delete-btn{
@@ -148,8 +159,6 @@ tbody td{
 <div class="container">
 
 <form id="taskForm">
-    <input type="hidden" id="editKey">
-
     <div>
         <label>Task Date</label>
         <input type="date" id="taskDate" required>
@@ -163,6 +172,7 @@ tbody td{
     <div>
         <label>Assign To</label>
         <select id="assignTo" required>
+            <option value="">Select</option>
             <option>Adly</option>
             <option>Eizzat</option>
         </select>
@@ -175,7 +185,7 @@ tbody td{
 
     <div>
         <label>Priority</label>
-        <select id="priority">
+        <select id="priority" required>
             <option>Low</option>
             <option>Medium</option>
             <option>High</option>
@@ -185,7 +195,7 @@ tbody td{
 
     <div>
         <label>Status</label>
-        <select id="status">
+        <select id="status" required>
             <option>Pending</option>
             <option>Monitoring</option>
             <option>Completed</option>
@@ -194,15 +204,15 @@ tbody td{
 
     <div style="grid-column:span 3;">
         <label>Description</label>
-        <textarea id="description"></textarea>
+        <textarea id="description" required></textarea>
     </div>
 
     <div style="grid-column:span 3;">
-        <label>Share URL of Detailed Report</label>
+        <label>Report URL</label>
         <input type="url" id="reportUrl">
     </div>
 
-    <button type="submit" id="submitBtn">➕ Add Task</button>
+    <button type="submit">➕ Add Task</button>
 </form>
 
 <div class="table-wrapper">
@@ -228,19 +238,20 @@ tbody td{
 
 </div>
 
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyA5d1rWrn9C9x5slkvkLQXW29JiMXoMSeg",
-  databaseURL: "https://tasktracker-e2329-default-rtdb.asia-southeast1.firebasedatabase.app"
+  authDomain: "tasktracker-e2329.firebaseapp.com",
+  databaseURL: "https://tasktracker-e2329-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "tasktracker-e2329"
 });
 
 const db = firebase.database();
 const tasksRef = db.ref("tasks");
-
-let editingKey = null;
 
 function generateTaskID(count){
     const year = new Date().getFullYear().toString().slice(-2);
@@ -248,10 +259,11 @@ function generateTaskID(count){
 }
 
 function renderTasks(data){
-    taskTable.innerHTML="";
+    const table = document.getElementById("taskTable");
+    table.innerHTML = "";
     Object.keys(data).forEach(key=>{
-        const t=data[key];
-        taskTable.innerHTML+=`
+        const t = data[key];
+        table.innerHTML += `
         <tr>
             <td>${t.id}</td>
             <td>${t.date}</td>
@@ -261,30 +273,10 @@ function renderTasks(data){
             <td>${t.dueDate}</td>
             <td><span class="badge priority-${t.priority}">${t.priority}</span></td>
             <td><span class="badge status-${t.status}">${t.status}</span></td>
-            <td>${t.reportUrl?`<button class="btn-view" onclick="window.open('${t.reportUrl}')">View</button>`:"-"}</td>
+            <td>${t.reportUrl ? `<button class="btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
             <td>${t.updated}</td>
-            <td>
-                <button class="edit-btn" onclick="editTask('${key}')">Edit</button>
-                <span class="delete-btn" onclick="deleteTask('${key}')">Delete</span>
-            </td>
+            <td><span class="delete-btn" onclick="deleteTask('${key}')">Delete</span></td>
         </tr>`;
-    });
-}
-
-function editTask(key){
-    tasksRef.child(key).once("value").then(s=>{
-        const t=s.val();
-        editingKey=key;
-        taskDate.value=t.date;
-        taskTitle.value=t.title;
-        description.value=t.description;
-        assignTo.value=t.assignTo;
-        dueDate.value=t.dueDate;
-        priority.value=t.priority;
-        status.value=t.status;
-        reportUrl.value=t.reportUrl||"";
-        submitBtn.textContent="✏️ Update Task";
-        window.scrollTo({top:0,behavior:"smooth"});
     });
 }
 
@@ -294,34 +286,31 @@ function deleteTask(key){
     }
 }
 
-taskForm.addEventListener("submit",e=>{
+document.getElementById("taskForm").addEventListener("submit", e=>{
     e.preventDefault();
-    const task={
-        date:taskDate.value,
-        title:taskTitle.value,
-        description:description.value,
-        assignTo:assignTo.value,
-        dueDate:dueDate.value,
-        priority:priority.value,
-        status:status.value,
-        reportUrl:reportUrl.value,
-        updated:new Date().toLocaleString()
+
+    const task = {
+        date: document.getElementById("taskDate").value,
+        title: document.getElementById("taskTitle").value,
+        description: document.getElementById("description").value,
+        assignTo: document.getElementById("assignTo").value,
+        dueDate: document.getElementById("dueDate").value,
+        priority: document.getElementById("priority").value,
+        status: document.getElementById("status").value,
+        reportUrl: document.getElementById("reportUrl").value,
+        updated: new Date().toLocaleString()
     };
 
-    if(editingKey){
-        tasksRef.child(editingKey).update(task);
-        editingKey=null;
-        submitBtn.textContent="➕ Add Task";
-    }else{
-        tasksRef.once("value").then(s=>{
-            task.id=generateTaskID(s.numChildren());
-            tasksRef.push(task);
-        });
-    }
-    taskForm.reset();
+    tasksRef.once("value").then(snap=>{
+        task.id = generateTaskID(snap.numChildren());
+        tasksRef.push(task);
+        e.target.reset();
+    });
 });
 
-tasksRef.on("value",s=>renderTasks(s.val()||{}));
+tasksRef.on("value", snap=>{
+    renderTasks(snap.val() || {});
+});
 </script>
 
 </body>
