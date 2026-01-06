@@ -91,19 +91,6 @@ button{
 button:hover{
     box-shadow:0 10px 20px rgba(37,99,235,.35);
 }
-    
-<button id="exportExcel" style="
-    margin-bottom:16px;
-    background:#16a34a;
-    color:white;
-    border:none;
-    padding:12px 16px;
-    border-radius:10px;
-    font-weight:700;
-    cursor:pointer;
-">
-📊 Export to Excel
-</button>
 
 /* TABLE */
 .table-wrapper{ overflow-x:auto; }
@@ -235,6 +222,19 @@ tbody tr:hover{ background:#f8fafc; }
     <button type="submit">➕ Add Task</button>
 </form>
 
+    <button id="exportExcel" style="
+    margin-bottom:16px;
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+">
+📊 Export to Excel
+</button>
+    
 <div class="table-wrapper">
 <table>
 <thead>
@@ -261,7 +261,7 @@ tbody tr:hover{ background:#f8fafc; }
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 firebase.initializeApp({
   apiKey: "AIzaSyA5d1rWrn9C9x5slkvkLQXW29JiMXoMSeg",
@@ -413,10 +413,11 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 });
 
 </script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
 
 </body>
 </html>
+
 
 
 
