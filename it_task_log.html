@@ -91,6 +91,19 @@ button{
 button:hover{
     box-shadow:0 10px 20px rgba(37,99,235,.35);
 }
+    
+<button id="exportExcel" style="
+    margin-bottom:16px;
+    background:#16a34a;
+    color:white;
+    border:none;
+    padding:12px 16px;
+    border-radius:10px;
+    font-weight:700;
+    cursor:pointer;
+">
+📊 Export to Excel
+</button>
 
 /* TABLE */
 .table-wrapper{ overflow-x:auto; }
@@ -364,11 +377,47 @@ document.getElementById("taskForm").addEventListener("submit", e=>{
 tasksRef.on("value", snap=>{
     renderTasks(snap.val() || {});
 });
+    
+document.getElementById("exportExcel").addEventListener("click", () => {
+    tasksRef.once("value").then(snap => {
+        const data = snap.val();
+        if (!data) {
+            alert("No data to export");
+            return;
+        }
+
+        const rows = [];
+
+        Object.values(data).forEach(t => {
+            rows.push({
+                ID: t.id,
+                Date: t.date,
+                Title: t.title,
+                Description: t.description,
+                Assign_To: t.assignTo,
+                Due_Date: t.dueDate,
+                Priority: t.priority,
+                Status: t.status,
+                Report_URL: t.reportUrl || "",
+                Last_Updated: t.updated
+            });
+        });
+
+        const worksheet = XLSX.utils.json_to_sheet(rows);
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "IT Tasks");
+
+        const fileName = `MT_IT_Task_Log_${new Date().toISOString().slice(0,10)}.xlsx`;
+        XLSX.writeFile(workbook, fileName);
+    });
+});
 
 </script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 </body>
 </html>
+
 
 
 
