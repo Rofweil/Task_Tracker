@@ -286,12 +286,25 @@ function renderTasks(data){
             <td>${t.reportUrl ? `<button class="btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
             <td>${t.updated}</td>
             <td>
-            <span class="edit-btn" onclick="editTask('${key}')">Edit</span>
-            <span class="delete-btn" onclick="deleteTask('${key}')">Delete</span>
+            <span class="edit-btn" data-key="${key}">Edit</span>
+            <span class="delete-btn" data-key="${key}">Delete</span>
             </td>
         </tr>`;
     });
 }
+
+    document.getElementById("taskTable").addEventListener("click", e => {
+    const key = e.target.dataset.key;
+    if (!key) return;
+
+    if (e.target.classList.contains("edit-btn")) {
+        editTask(key);
+    }
+
+    if (e.target.classList.contains("delete-btn")) {
+        deleteTask(key);
+    }
+});
     
 function editTask(key){
     tasksRef.child(key).once("value").then(snap=>{
@@ -351,9 +364,11 @@ document.getElementById("taskForm").addEventListener("submit", e=>{
 tasksRef.on("value", snap=>{
     renderTasks(snap.val() || {});
 });
+
 </script>
 
 </body>
 </html>
+
 
 
