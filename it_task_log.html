@@ -149,6 +149,13 @@ tbody tr:hover{ background:#f8fafc; }
     font-weight:700;
     margin-left:8px;
 }
+
+.edit-btn{
+    color:#2563eb;
+    cursor:pointer;
+    font-weight:700;
+}
+
 </style>
 </head>
 
@@ -253,6 +260,9 @@ firebase.initializeApp({
 const db = firebase.database();
 const tasksRef = db.ref("tasks");
 
+let editingKey = null;
+const submitBtn = document.querySelector("#taskForm button");
+
 function generateTaskID(count){
     const year = new Date().getFullYear().toString().slice(-2);
     return `MT${year}${String(count+1).padStart(3,"0")}`;
@@ -275,8 +285,30 @@ function renderTasks(data){
             <td><span class="badge status-${t.status}">${t.status}</span></td>
             <td>${t.reportUrl ? `<button class="btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
             <td>${t.updated}</td>
-            <td><span class="delete-btn" onclick="deleteTask('${key}')">Delete</span></td>
+            <td>
+            <span class="edit-btn" onclick="editTask('${key}')">Edit</span>
+            <span class="delete-btn" onclick="deleteTask('${key}')">Delete</span>
+            </td>
         </tr>`;
+    });
+}
+    
+function editTask(key){
+    tasksRef.child(key).once("value").then(snap=>{
+        const t = snap.val();
+        if(!t) return;
+
+        document.getElementById("taskDate").value = t.date;
+        document.getElementById("taskTitle").value = t.title;
+        document.getElementById("description").value = t.description;
+        document.getElementById("assignTo").value = t.assignTo;
+        document.getElementById("dueDate").value = t.dueDate;
+        document.getElementById("priority").value = t.priority;
+        document.getElementById("status").value = t.status;
+        document.getElementById("reportUrl").value = t.reportUrl || "";
+
+        editingKey = key;
+        submitBtn.textContent = "✏️ Update Task";
     });
 }
 
@@ -301,12 +333,20 @@ document.getElementById("taskForm").addEventListener("submit", e=>{
         updated: new Date().toLocaleString()
     };
 
+    if(editingKey){
+    task.updated = new Date().toLocaleString();
+    tasksRef.child(editingKey).update(task);
+    editingKey = null;
+    submitBtn.textContent = "➕ Add Task";
+    e.target.reset();
+}else{
     tasksRef.once("value").then(snap=>{
         task.id = generateTaskID(snap.numChildren());
         tasksRef.push(task);
         e.target.reset();
     });
-});
+}
+
 
 tasksRef.on("value", snap=>{
     renderTasks(snap.val() || {});
@@ -315,3 +355,4 @@ tasksRef.on("value", snap=>{
 
 </body>
 </html>
+
