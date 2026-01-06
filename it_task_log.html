@@ -359,13 +359,24 @@ document.getElementById("taskForm").addEventListener("submit", e=>{
         updated: new Date().toLocaleString()
     };
 
-    if(editingKey){
-    task.updated = new Date().toLocaleString();
-    tasksRef.child(editingKey).update(task);
-    editingKey = null;
-    submitBtn.textContent = "➕ Add Task";
-    e.target.reset();
-}else{
+    if (editingKey) {
+    tasksRef.child(editingKey).once("value").then(snap => {
+        const existing = snap.val();
+
+        const updatedTask = {
+            ...existing,        // keep ID and any other fields
+            ...task,            // overwrite editable fields
+            updated: new Date().toLocaleString()
+        };
+
+        tasksRef.child(editingKey).set(updatedTask);
+
+        editingKey = null;
+        submitBtn.textContent = "➕ Add Task";
+        e.target.reset();
+    });
+}
+else{
     tasksRef.once("value").then(snap=>{
         task.id = generateTaskID(snap.numChildren());
         tasksRef.push(task);
@@ -446,6 +457,7 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 
 </body>
 </html>
+
 
 
 
