@@ -276,9 +276,20 @@ const tasksRef = db.ref("tasks");
 let editingKey = null;
 const submitBtn = document.querySelector("#taskForm button");
 
-function generateTaskID(count){
+function generateTaskID(existingTasks){
     const year = new Date().getFullYear().toString().slice(-2);
-    return `MT${year}${String(count+1).padStart(3,"0")}`;
+    let max = 0;
+
+    if (existingTasks) {
+        Object.values(existingTasks).forEach(t => {
+            if (t.id && t.id.startsWith(`MT${year}`)) {
+                const num = parseInt(t.id.slice(-3));
+                if (num > max) max = num;
+            }
+        });
+    }
+
+    return `MT${year}${String(max + 1).padStart(3, "0")}`;
 }
 
 function renderTasks(data){
@@ -288,7 +299,7 @@ function renderTasks(data){
         const t = data[key];
         table.innerHTML += `
         <tr>
-            <td>${t.id}</td>
+            <td>${t.id || "—"}</td>
             <td>${t.date}</td>
             <td>${t.title}</td>
             <td>${t.description}</td>
@@ -359,26 +370,37 @@ document.getElementById("taskForm").addEventListener("submit", e=>{
         updated: new Date().toLocaleString()
     };
 
-    if (editingKey) {
-    tasksRef.child(editingKey).once("value").then(snap => {
-        const existing = snap.val();
+if (editingKey) {
+    tasksRef.once("value").then(allSnap => {
+        const allTasks = allSnap.val() || {};
 
-        const updatedTask = {
-            ...existing,        // keep ID and any other fields
-            ...task,            // overwrite editable fields
-            updated: new Date().toLocaleString()
-        };
+        tasksRef.child(editingKey).once("value").then(snap => {
+            const existing = snap.val();
+            if (!existing) return;
 
-        tasksRef.child(editingKey).set(updatedTask);
+            // ✅ FIX: assign ID if missing
+            const fixedId = existing.id
+                ? existing.id
+                : generateTaskID(allTasks);
 
-        editingKey = null;
-        submitBtn.textContent = "➕ Add Task";
-        e.target.reset();
+            const updatedTask = {
+                ...existing,
+                ...task,
+                id: fixedId, // <-- ensure ID exists
+                updated: new Date().toLocaleString()
+            };
+
+            tasksRef.child(editingKey).set(updatedTask);
+
+            editingKey = null;
+            submitBtn.textContent = "➕ Add Task";
+            document.getElementById("taskForm").reset();
+        });
     });
 }
 else{
     tasksRef.once("value").then(snap=>{
-        task.id = generateTaskID(snap.numChildren());
+        task.id = generateTaskID(snap.val());
         tasksRef.push(task);
         e.target.reset();
     });
@@ -415,17 +437,18 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 
         Object.values(data).forEach(t => {
             rows.push([
-                t.id,
-                t.date,
-                t.title,
-                t.description,
-                t.assignTo,
-                t.dueDate,
-                t.priority,
-                t.status,
-                t.reportUrl || "",
-                t.updated
-            ]);
+    t.id || "",
+    t.date,
+    t.title,
+    t.description,
+    t.assignTo,
+    t.dueDate,
+    t.priority,
+    t.status,
+    t.reportUrl || "",
+    t.updated
+]);
+
         });
 
         const worksheet = XLSX.utils.aoa_to_sheet(rows);
@@ -457,10 +480,3 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
