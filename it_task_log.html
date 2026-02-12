@@ -234,6 +234,26 @@ tbody tr:hover{ background:#f8fafc; }
 ">
 📊 Export to Excel
 </button>
+
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+
+    <label style="font-weight:600;">Sort By:</label>
+
+    <select id="sortField" style="padding:8px; border-radius:8px; border:1px solid #e5e7eb;">
+        <option value="updated">Last Updated</option>
+        <option value="assignTo">Assign Name</option>
+        <option value="status">Status</option>
+        <option value="priority">Priority</option>
+        <option value="date">Task Date</option>
+        <option value="title">Title</option>
+    </select>
+
+    <select id="sortDirection" style="padding:8px; border-radius:8px; border:1px solid #e5e7eb;">
+        <option value="desc">Descending</option>
+        <option value="asc">Ascending</option>
+    </select>
+
+</div>
     
 <div class="table-wrapper">
 <table>
@@ -270,6 +290,10 @@ firebase.initializeApp({
   projectId: "tasktracker-e2329"
 });
 
+    
+let currentSortField = "updated";
+let currentSortDirection = "desc";
+
 const db = firebase.database();
 const tasksRef = db.ref("tasks");
 
@@ -295,8 +319,41 @@ function generateTaskID(existingTasks){
 function renderTasks(data){
     const table = document.getElementById("taskTable");
     table.innerHTML = "";
-    Object.keys(data).forEach(key=>{
-        const t = data[key];
+
+    const entries = Object.entries(data);
+
+    entries.sort((a, b) => {
+        const field = currentSortField;
+        let valA = a[1][field] || "";
+        let valB = b[1][field] || "";
+
+        // Date fields
+        if (field === "date" || field === "updated") {
+            valA = new Date(valA);
+            valB = new Date(valB);
+        }
+
+        // Priority custom order
+        if (field === "priority") {
+            const order = { Low:1, Medium:2, High:3, Critical:4 };
+            valA = order[valA] || 0;
+            valB = order[valB] || 0;
+        }
+
+        // Status custom order
+        if (field === "status") {
+            const order = { Pending:1, Monitoring:2, Completed:3 };
+            valA = order[valA] || 0;
+            valB = order[valB] || 0;
+        }
+
+
+        if (valA < valB) return currentSortDirection === "asc" ? -1 : 1;
+        if (valA > valB) return currentSortDirection === "asc" ? 1 : -1;
+        return 0;
+    });
+
+    entries.forEach(([key, t]) => {
         table.innerHTML += `
         <tr>
             <td>${t.id || "—"}</td>
@@ -310,12 +367,26 @@ function renderTasks(data){
             <td>${t.reportUrl ? `<button class="btn-view" onclick="window.open('${t.reportUrl}','_blank')">View</button>` : "-"}</td>
             <td>${t.updated}</td>
             <td>
-            <span class="edit-btn" data-key="${key}">Edit</span>
-            <span class="delete-btn" data-key="${key}">Delete</span>
+                <span class="edit-btn" data-key="${key}">Edit</span>
+                <span class="delete-btn" data-key="${key}">Delete</span>
             </td>
         </tr>`;
     });
 }
+    
+document.getElementById("sortField").addEventListener("change", e => {
+    currentSortField = e.target.value;
+    tasksRef.once("value").then(snap => {
+        renderTasks(snap.val() || {});
+    });
+});
+
+document.getElementById("sortDirection").addEventListener("change", e => {
+    currentSortDirection = e.target.value;
+    tasksRef.once("value").then(snap => {
+        renderTasks(snap.val() || {});
+    });
+});
 
     document.getElementById("taskTable").addEventListener("click", e => {
     const key = e.target.dataset.key;
@@ -435,21 +506,50 @@ document.getElementById("exportExcel").addEventListener("click", () => {
             ]
         ];
 
-        Object.values(data).forEach(t => {
-            rows.push([
-    t.id || "",
-    t.date,
-    t.title,
-    t.description,
-    t.assignTo,
-    t.dueDate,
-    t.priority,
-    t.status,
-    t.reportUrl || "",
-    t.updated
-]);
+        const entries = Object.entries(data);
 
-        });
+entries.sort((a, b) => {
+    const field = currentSortField;
+    let valA = a[1][field] || "";
+    let valB = b[1][field] || "";
+
+    if (field === "date" || field === "updated") {
+        valA = new Date(valA);
+        valB = new Date(valB);
+    }
+
+    if (field === "priority") {
+        const order = { Low:1, Medium:2, High:3, Critical:4 };
+        valA = order[valA] || 0;
+        valB = order[valB] || 0;
+    }
+
+    if (field === "status") {
+        const order = { Pending:1, Monitoring:2, Completed:3 };
+        valA = order[valA] || 0;
+        valB = order[valB] || 0;
+    }
+
+    if (valA < valB) return currentSortDirection === "asc" ? -1 : 1;
+    if (valA > valB) return currentSortDirection === "asc" ? 1 : -1;
+    return 0;
+});
+
+entries.forEach(([key, t]) => {
+    rows.push([
+        t.id || "",
+        t.date,
+        t.title,
+        t.description,
+        t.assignTo,
+        t.dueDate,
+        t.priority,
+        t.status,
+        t.reportUrl || "",
+        t.updated
+    ]);
+});
+
 
         const worksheet = XLSX.utils.aoa_to_sheet(rows);
 
@@ -480,3 +580,4 @@ document.getElementById("exportExcel").addEventListener("click", () => {
 
 </body>
 </html>
+
