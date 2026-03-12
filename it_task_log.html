@@ -241,6 +241,7 @@ tbody tr:hover{ background:#f8fafc; }
 
     <select id="sortField" style="padding:8px; border-radius:8px; border:1px solid #e5e7eb;">
         <option value="updated">Last Updated</option>
+        <option value="id">Task ID</option>
         <option value="assignTo">Assign Name</option>
         <option value="status">Status</option>
         <option value="priority">Priority</option>
@@ -252,6 +253,39 @@ tbody tr:hover{ background:#f8fafc; }
         <option value="desc">Descending</option>
         <option value="asc">Ascending</option>
     </select>
+
+</div>
+<div style="display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap;">
+
+<label style="font-weight:600;">Filter Date:</label>
+
+<input type="date" id="fromDate">
+
+<span>to</span>
+
+<input type="date" id="toDate">
+
+<button id="applyFilter" style="
+padding:8px 14px;
+background:#2563eb;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+">
+Apply
+</button>
+
+<button id="clearFilter" style="
+padding:8px 14px;
+background:#64748b;
+color:white;
+border:none;
+border-radius:8px;
+cursor:pointer;
+">
+Clear
+</button>
 
 </div>
     
@@ -293,6 +327,8 @@ firebase.initializeApp({
     
 let currentSortField = "updated";
 let currentSortDirection = "desc";
+let filterFromDate = null;
+let filterToDate = null;
 
 const db = firebase.database();
 const tasksRef = db.ref("tasks");
@@ -320,7 +356,19 @@ function renderTasks(data){
     const table = document.getElementById("taskTable");
     table.innerHTML = "";
 
-    const entries = Object.entries(data);
+    let entries = Object.entries(data);
+
+    // Date filter
+if (filterFromDate || filterToDate) {
+    entries = entries.filter(([key, t]) => {
+        const taskDate = new Date(t.date);
+
+        if (filterFromDate && taskDate < new Date(filterFromDate)) return false;
+        if (filterToDate && taskDate > new Date(filterToDate)) return false;
+
+        return true;
+    });
+}
 
     entries.sort((a, b) => {
         const field = currentSortField;
@@ -386,6 +434,30 @@ document.getElementById("sortDirection").addEventListener("change", e => {
     tasksRef.once("value").then(snap => {
         renderTasks(snap.val() || {});
     });
+});
+    document.getElementById("applyFilter").addEventListener("click", () => {
+
+    filterFromDate = document.getElementById("fromDate").value;
+    filterToDate = document.getElementById("toDate").value;
+
+    tasksRef.once("value").then(snap => {
+        renderTasks(snap.val() || {});
+    });
+
+});
+
+document.getElementById("clearFilter").addEventListener("click", () => {
+
+    filterFromDate = null;
+    filterToDate = null;
+
+    document.getElementById("fromDate").value = "";
+    document.getElementById("toDate").value = "";
+
+    tasksRef.once("value").then(snap => {
+        renderTasks(snap.val() || {});
+    });
+
 });
 
     document.getElementById("taskTable").addEventListener("click", e => {
@@ -580,4 +652,5 @@ entries.forEach(([key, t]) => {
 
 </body>
 </html>
+
 
